@@ -7,17 +7,28 @@ import json
 import os
 import sys
 import unittest
+import yaml
 
 from subprocess import run
 
+ACCEPTED_FORMATS = ["json", "yaml"]
+
 def execute_test(script_path: str, test: dict) -> str:
-    process = run([script_path, *test["input"].split(' ')], capture_output=True)
+    if test["input"]:
+        inpt = test["input"].split(' ')
+    else:
+        inpt = []
+
+    process = run([script_path, *inpt], capture_output=True)
 
     # Command failed
     if process.returncode != 0:
         return process.stderr 
 
-    elif process.stdout[:-1] == test["output"].encode("utf8"):
+    elif test["output"] is None and process.stdout.decode("utf8") == '\n':
+        return ''
+
+    elif process.stdout.decode("utf8")[:-1] == test["output"]:
         print('.', end='')
         return ''
 
@@ -37,24 +48,33 @@ def print_failed(tests: list[tuple]):
 
 def main(args):
     if not os.path.isfile(args.script_path):
-        printf(f"{args.script_path} is not a file!", file=sys.stderr)
+        print(f"{args.script_path} is not a file!", file=sys.stderr)
         exit(1)
     elif not os.access(args.script_path, os.X_OK):
-        printf(f"{args.script_path} is not a executable!", file=sys.stderr)
+        print(f"{args.script_path} is not a executable!", file=sys.stderr)
         exit(2)
 
+    testcase_format = args.test_file_path.split('.')[-1]
     if not os.path.isfile(args.test_file_path):
-        printf(f"{args.test_file_path} is not a file!", file=sys.stderr)
+        print(f"{args.test_file_path} is not a file!", file=sys.stderr)
         exit(3)
-    elif not args.test_file_path.endswith(".json"):
-        printf(f"{args.test_file_path} is not a json file!", file=sys.stderr)
+    elif testcase_format not in ACCEPTED_FORMATS:
+        print(f"{args.test_file_path} is not in an accepted format! (", *ACCEPTED_FORMATS, ')', file=sys.stderr)
         exit(4)
 
     failed_tests = list()
 
     with open(args.test_file_path) as test_file:
-        test_json = json.load(test_file)
-        for test_case in test_json:
+        match testcase_format:
+            case "json":
+                tests = json.load(test_file)
+            case "yaml":
+                tests = yaml.safe_load(test_file)
+            case _:
+                print(f"Oops, not implemented for format {testcase_format}",
+                    file=sys.stderr)
+                exit(5)
+        for test_case in tests:
             if result := execute_test(args.script_path, test_case):
                 failed_tests.append((test_case, result))
 
@@ -62,7 +82,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser (
-            prog = "TestACM",
+            prog = "TestScript",
             description = "Tests a script against a multiple test cases defined in a yaml format"
     )
 
