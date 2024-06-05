@@ -1,8 +1,13 @@
 #!/bin/python3
 """
 sdf
+
+TODO:
+    - finish execute_test_interactive
+    - auto compilation?
 """
 import argparse
+import builtins
 import json
 import os
 import sys
@@ -13,17 +18,28 @@ from subprocess import run
 
 ACCEPTED_FORMATS = ["json", "yaml"]
 
+class bcolors:
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+
+# TODO type args
 def execute_test(script_path: str, test: dict) -> str:
-    if test["input"]:
-        inpt = test["input"].split(' ')
-    else:
-        inpt = []
+    """ Execute commands with arguments directly """
+    match type(test["input"]):
+        case builtins.str:
+            inpt = test["input"].split(' ')
+        case builtins.list:
+            inpt = [str(args) for args in test["input"]]
+        case _:
+            inpt = []
 
     process = run([script_path, *inpt], capture_output=True)
 
     # Command failed
     if process.returncode != 0:
         return process.stderr 
+
 
     elif test["output"] is None and process.stdout.decode("utf8") == '\n':
         return ''
@@ -35,6 +51,23 @@ def execute_test(script_path: str, test: dict) -> str:
     else:
         print('x', end='')
         return process.stdout
+
+def execute_test_interactive(script_path: str, test: dict) -> str:
+    """
+    Execute commands by first running script and then sending test to stdin.
+    This will try it for a default of 3 minutes. The subprocess will be killed
+    if it exceeds the time.
+    """
+    match type(test["input"]):
+        case builtins.str:
+            inpt = args.split(' ')
+        case builtins.list:
+            inpt = [str(args) for args in test["input"]]
+        case _:
+            inpt = []
+
+    process = run([script_path], capture_output=True)
+    
 
 def print_failed(tests: list[tuple]):
     print()
@@ -86,12 +119,15 @@ if __name__ == "__main__":
             description = "Tests a script against a multiple test cases defined in a yaml format"
     )
 
-    parser.add_argument("script_path",
-        type = str,
+    parser.add_argument("script_path", type = str,
         help = ""
     )
-    parser.add_argument("test_file_path",
-        type = str,
+    parser.add_argument("test_file_path", type = str,
+        help = ""
+    )
+
+    parser.add_argument("--interactive", action=argparse.BooleanOptionalAction)
+    parser.add_argument("--wait_time", type = int, default = 180,
         help = ""
     )
 
