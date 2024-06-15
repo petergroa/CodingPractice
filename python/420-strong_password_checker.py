@@ -26,12 +26,7 @@ def strongPasswordChecker(password: str) -> int:
             continue
         else:
             if same_char_count >= REPEAT:
-                if needs_delete > 0 and same_char_count%REPEAT == 0:
-                    count_change += same_char_count//3 - 1
-                    needs_delete -= 1
-                    deleted += 1
-                else:
-                    islands.append(same_char_count)
+                islands.append(same_char_count)
             same_char_count = 1
 
         if 'A' <= char <= 'Z':
@@ -46,36 +41,45 @@ def strongPasswordChecker(password: str) -> int:
     # Optimal deletions
     # How many deletes can we do instead of changes
     # Sort islands with biggest residuals to delete from there
-    islands = sorted(islands, reverse=True, key=lambda x: x%REPEAT)
+    print("Needs add " + str(needs_add) + " | ", 
+        "Count change " + str(count_change) + " | ",
+        "Deleted " + str(deleted) + " | ",
+        "Needs deleted " + str(needs_delete) + " | ",
+        "Needs lower " + str(needs_lower) + " | ",
+        "Needs upper " + str(needs_upper) + " | ",
+        "Needs digit " + str(needs_digit) + " | ")
 
-#    print("Needs add " + str(needs_add) + " | ", 
-#        "Count change " + str(count_change) + " | ",
-#        "Deleted " + str(deleted) + " | ",
-#        "Needs deleted " + str(needs_delete) + " | ",
-#        "Needs lower " + str(needs_lower) + " | ",
-#        "Needs upper " + str(needs_upper) + " | ",
-#        "Needs digit " + str(needs_digit) + " | ")
+    if needs_delete <= 0:
+        count_change += sum([island//REPEAT for island in islands])
 
-    for island in islands:
-        if needs_delete > 0:
-            reduced = min(island, needs_delete)
-            count_change += (island-reduced)//3
-            deleted += reduced
-            needs_delete -= reduced
-        else:
-            count_change += island//3
+    # find the optimal deletion
+    elif islands:
+        # Apply the most deletes as possible
+        islands = sorted(islands, key=lambda x: x%REPEAT)
+        print(islands)
+        mx_island = max([*islands])
+        while needs_delete and mx_island >= 3:
+            for island in islands:
+                amount_to_be_deleted = min(island%REPEAT+1, needs_delete)
+                print(island, needs_delete, amount_to_be_deleted)
+                needs_delete -= amount_to_be_deleted
+                island -= amount_to_be_deleted
+            islands = islands[::-1]
+            mx_island = max([*islands])
+
+        count_change += sum([island//REPEAT for island in islands])
 
     # How many adds
     total = max(max(count_change, needs_add),
             needs_lower+needs_upper+needs_digit)
 
-#    print("Needs add " + str(needs_add) + " | ", 
-#        "Count change " + str(count_change) + " | ",
-#        "Deleted " + str(deleted) + " | ",
-#        "Needs deleted " + str(needs_delete) + " | ",
-#        "Needs lower " + str(needs_lower) + " | ",
-#        "Needs upper " + str(needs_upper) + " | ",
-#        "Needs digit " + str(needs_digit) + " | ")
+    print("Needs add " + str(needs_add) + " | ", 
+        "Count change " + str(count_change) + " | ",
+        "Deleted " + str(deleted) + " | ",
+        "Needs deleted " + str(needs_delete) + " | ",
+        "Needs lower " + str(needs_lower) + " | ",
+        "Needs upper " + str(needs_upper) + " | ",
+        "Needs digit " + str(needs_digit) + " | ")
     return deleted + needs_delete + \
         max(max(count_change, needs_add), # letters can be added between groups
             needs_lower + needs_upper + needs_digit) # secure other params
