@@ -1,0 +1,7 @@
+-
+  id: Basic search suggestion
+  input:
+    - input-files/private-chrome-history.txt
+    - python
+  output-regex:
+    - python \w+
