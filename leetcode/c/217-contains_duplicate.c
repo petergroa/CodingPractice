@@ -23,6 +23,23 @@ Notice that the answer must be a substring, "pwke" is a subsequence and not a su
 
 #include <stdio.h>
 
+bool containsDuplicate(int* nums, int numsSize) {
+  char *brray = (char *)calloc( (INT_MAX/4)+1, sizeof(char));
+  int index;
+  for (int i = 0; i < num.size(); i++) {
+    if (nums[i] < 0) index = (nums[i]*-2)+1; // handle all negatives as odd numbers
+    else index = nums[i]*2; // all positives are even numbers
+
+    if ((brray[index/8] & (1<<index%8)) != 0) {
+      free(brray);
+      return true;
+    }
+    brray[index/8] |= 1<<(index%8);
+  }
+  free(brray);
+  return false;
+}
+
 int main() {
     return 0;
 }
