@@ -37,20 +37,23 @@
  * 1 <= n <= 100
  * 1 <= fruits[i], baskets[i] <= 1000
  */
-#include <vector>
 
-int numOfUnplacedFruits(std::vector<int> &fruits, std::vector<int> &baskets) {
-    int count = 0, basketIndx;
+func numOfUnplacedFruits(fruits []int, baskets []int) int {
+    count := 0
 
-    for (int fruit : fruits) {
-        for (basketIndx = 0; basketIndx < baskets.size(); basketIndx++) {
-            if (fruit <= baskets[basketIndx]) {
+    for _, fruit := range fruits {
+        for basketIndx, basket := range baskets {
+            if fruit <= basket {
                 baskets[basketIndx] = 0;
                 fruit = 0;
                 break;
             }
         }
-        if (fruit) count++;
+
+        if fruit > 0 {
+            count++;
+        }
     }
+
     return count;
 }
